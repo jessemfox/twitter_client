@@ -1,5 +1,4 @@
 require 'json'
-require 'restclient'
 require 'addressable/uri'
 require 'oauth'
 require 'launchy'
@@ -19,28 +18,28 @@ class TwitterSession
 
   def self.get(path, query_values)
     url = TwitterSession.path_to_url(path, query_values)
+    p url
     # puts url.to_s
-    response = self.access_token.get(url.to_s).body
-    JSON.parse(response)
+    JSON.parse(self.access_token.get(url.to_s).body)
   end
 
   def self.post(path, reg_params)
     url = TwitterSession.path_to_url(path)
-    self.access_token.post(url.to_s, reg_params)
+    JSON.parse(self.access_token.post(url.to_s, reg_params).body)
   end
 
   def self.access_token
     if File.exist?(TOKEN_FILE)
         # reload token from file
-        File.open(TOKEN_FILE) { |f| YAML.load(f) }
-      else
-        # copy the old code that requested the access token into a
-        # `request_access_token` method.
-        access_token = TwitterSession.request_access_token
-        File.open(TOKEN_FILE, "w") { |f| YAML.dump(access_token, f) }
+      @access_token ||= File.open(TOKEN_FILE) { |f| YAML.load(f) }
+    else
+      # copy the old code that requested the access token into a
+      # `request_access_token` method.
+      @access_token ||= TwitterSession.request_access_token
+      File.open(TOKEN_FILE, "w") { |f| YAML.dump(access_token, f) }
 
-        access_token
-      end
+      @access_token
+    end
   end
 
   def self.request_access_token
